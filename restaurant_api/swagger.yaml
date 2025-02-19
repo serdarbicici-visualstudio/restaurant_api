@@ -1,0 +1,885 @@
+openapi: 3.0.0
+info:
+  title: Restaurant Management API
+  version: 1.0.0
+  description: API for managing restaurant operations including orders, reservations, staff, and tables
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/analytics/customer_spending:
+    get:
+      summary: Get customer spending analytics
+      tags: [Analytics]
+      description: Retrieve the total spending of each customer, ordered by the highest spending.
+      responses:
+        '200':
+          description: Successfully retrieved customer spending data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    customer_name:
+                      type: string
+                      description: Name of the customer
+                    total_spent:
+                      type: number
+                      format: float
+                      description: Total amount spent by the customer
+        '500':
+          description: Internal server error
+
+  /api/analytics/popular_dishes:
+    get:
+      summary: Get popular dishes analytics
+      tags: [Analytics]
+      description: Retrieve the top 5 most ordered dishes with their total orders.
+      responses:
+        '200':
+          description: Successfully retrieved popular dishes data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    dish_name:
+                      type: string
+                      description: Name of the dish
+                    total_orders:
+                      type: integer
+                      description: Total number of times the dish was ordered
+        '500':
+          description: Internal server error
+
+  /api/analytics/pending_orders_details:
+    get:
+      summary: Get pending orders details
+      tags: [Analytics]
+      description: Retrieve details of all pending orders, including dish names and quantities.
+      responses:
+        '200':
+          description: Successfully retrieved pending orders details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order_id:
+                      type: integer
+                      description: ID of the pending order
+                    dish_name:
+                      type: string
+                      description: Name of the dish
+                    quantity:
+                      type: integer
+                      description: Quantity of the dish in the order
+        '500':
+          description: Internal server error
+
+  /api/analytics/above_average_spenders:
+    get:
+      summary: Get above average spenders analytics
+      tags: [Analytics]
+      description: Retrieve the list of customers whose total spending is above the average spending of all customers.
+      responses:
+        '200':
+          description: Successfully retrieved above average spenders data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    customer_name:
+                      type: string
+                      description: Name of the customer
+                    total_spent:
+                      type: number
+                      format: float
+                      description: Total amount spent by the customer
+        '500':
+          description: Internal server error
+
+
+  /api/customers/add:
+    post:
+      summary: Add a new customer
+      tags: [Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - contact_details
+              properties:
+                name:
+                  type: string
+                contact_details:
+                  type: string
+      responses:
+        '201':
+          description: Customer added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+  /api/customers:
+    get:
+      summary: Get all customers
+      tags: [Customers]
+      responses:
+        '200':
+          description: Successfully retrieved customers
+        '403':
+          description: Unauthorized
+        '500':
+          description: Database error
+
+  /api/customers/{customer_id}:
+    get:
+      summary: Get a specific customer
+      tags: [Customers]
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved customer
+        '404':
+          description: Customer not found
+        '500':
+          description: Database error
+
+    put:
+      summary: Update a customer
+      tags: [Customers]
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                contact_details:
+                  type: string
+      responses:
+        '200':
+          description: Customer updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    delete:
+      summary: Delete a customer
+      tags: [Customers]
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Customer deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Customer not found
+        '500':
+          description: Database error
+  /api/menu/add:
+    post:
+      summary: Add a new dish to the menu
+      tags: [Menu]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dish_name
+                - category
+                - price
+              properties:
+                dish_name:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+      responses:
+        '201':
+          description: Dish added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+  /api/menu/{dish_name}:
+    get:
+      summary: Get a specific dish by name
+      tags: [Menu]
+      parameters:
+        - name: dish_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved dish
+        '404':
+          description: Dish not found
+        '500':
+          description: Database error
+
+  /api/menu:
+    get:
+      summary: Get all menu items
+      tags: [Menu]
+      responses:
+        '200':
+          description: Successfully retrieved menu items
+        '403':
+          description: Unauthorized
+        '500':
+          description: Database error
+
+  /api/menu/{dish_id}:
+    delete:
+      summary: Delete a dish
+      tags: [Menu]
+      parameters:
+        - name: dish_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Dish deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Dish not found
+        '500':
+          description: Database error
+
+    put:
+      summary: Update a dish
+      tags: [Menu]
+      parameters:
+        - name: dish_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                dish_name:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+      responses:
+        '200':
+          description: Dish updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Dish not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+  /api/order_items:
+    post:
+      summary: Add a new order item
+      tags: [Order Items]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_id
+                - dish_id
+                - quantity
+              properties:
+                order_id:
+                  type: integer
+                dish_id:
+                  type: integer
+                quantity:
+                  type: integer
+      responses:
+        '201':
+          description: Order item added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    get:
+      summary: Get all order items
+      tags: [Order Items]
+      responses:
+        '200':
+          description: Successfully retrieved order items
+        '403':
+          description: Unauthorized
+        '500':
+          description: Database error
+
+  /api/order_items/{order_item_id}:
+    get:
+      summary: Get a specific order item
+      tags: [Order Items]
+      parameters:
+        - name: order_item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved order item
+        '404':
+          description: Order item not found
+        '500':
+          description: Database error
+
+    put:
+      summary: Update an order item
+      tags: [Order Items]
+      parameters:
+        - name: order_item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: integer
+                dish_id:
+                  type: integer
+                quantity:
+                  type: integer
+      responses:
+        '200':
+          description: Order item updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Order item not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    delete:
+      summary: Delete an order item
+      tags: [Order Items]
+      parameters:
+        - name: order_item_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order item deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Order item not found
+        '500':
+          description: Database error
+  /api/orders/add:
+    post:
+      summary: Add a new order
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reservation_id
+                - total_amount
+              properties:
+                reservation_id:
+                  type: integer
+                total_amount:
+                  type: number
+                order_status:
+                  type: string
+                  default: "Pending"
+      responses:
+        '201':
+          description: Order added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+  /api/orders:
+    get:
+      summary: Get all orders
+      tags: [Orders]
+      responses:
+        '200':
+          description: Successfully retrieved orders
+        '403':
+          description: Unauthorized
+        '500':
+          description: Database error
+
+  /api/orders/{order_id}:
+    get:
+      summary: Get a specific order
+      tags: [Orders]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved order
+        '404':
+          description: Order not found
+        '500':
+          description: Database error
+
+    put:
+      summary: Update an order
+      tags: [Orders]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reservation_id:
+                  type: integer
+                total_amount:
+                  type: number
+                order_status:
+                  type: string
+      responses:
+        '200':
+          description: Order updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    delete:
+      summary: Delete an order
+      tags: [Orders]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Order not found
+        '500':
+          description: Database error
+
+  /api/payments/add:
+    post:
+      summary: Add a new payment
+      tags: [Payments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_id
+                - amount_paid
+                - payment_method
+              properties:
+                order_id:
+                  type: integer
+                amount_paid:
+                  type: number
+                payment_method:
+                  type: string
+      responses:
+        '201':
+          description: Payment added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+  /api/payments/{payment_id}:
+    put:
+      summary: Update a payment
+      tags: [Payments]
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount_paid
+                - payment_method
+              properties:
+                amount_paid:
+                  type: number
+                payment_method:
+                  type: string
+      responses:
+        '200':
+          description: Payment updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Payment not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    delete:
+      summary: Delete a payment
+      tags: [Payments]
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payment deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Payment not found
+        '500':
+          description: Database error
+
+  /api/staff:
+    get:
+      summary: Get all staff members
+      tags: [Staff]
+      responses:
+        '200':
+          description: Successfully retrieved staff members
+        '403':
+          description: Unauthorized
+        '500':
+          description: Database error
+
+  /api/staff/add:
+    post:
+      summary: Add a new staff member
+      tags: [Staff]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - role
+                - shift
+              properties:
+                name:
+                  type: string
+                role:
+                  type: string
+                  enum: [Waiter, Chef, Manager, Host]
+                shift:
+                  type: string
+                  enum: [Morning, Afternoon, Evening]
+      responses:
+        '201':
+          description: Staff member added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields or invalid role/shift
+        '500':
+          description: Database error
+
+  /api/staff/{staff_id}:
+    get:
+      summary: Get a specific staff member
+      tags: [Staff]
+      parameters:
+        - name: staff_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved staff member
+        '403':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+        '500':
+          description: Database error
+
+    put:
+      summary: Update a staff member
+      tags: [Staff]
+      parameters:
+        - name: staff_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                role:
+                  type: string
+                  enum: [Waiter, Chef, Manager, Host]
+                shift:
+                  type: string
+                  enum: [Morning, Afternoon, Evening]
+      responses:
+        '200':
+          description: Staff member updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    delete:
+      summary: Delete a staff member
+      tags: [Staff]
+      parameters:
+        - name: staff_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Staff member deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Staff member not found
+        '500':
+          description: Database error
+  /api/tables/add:
+    post:
+      summary: Add a new table
+      tags: [Tables]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - capacity
+                - location
+              properties:
+                capacity:
+                  type: integer
+                location:
+                  type: string
+      responses:
+        '201':
+          description: Table added successfully
+        '403':
+          description: Unauthorized
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+  /api/tables:
+    get:
+      summary: Get all tables
+      tags: [Tables]
+      responses:
+        '200':
+          description: Successfully retrieved tables
+        '403':
+          description: Unauthorized
+        '500':
+          description: Database error
+
+  /api/tables/{table_id}:
+    get:
+      summary: Get a specific table
+      tags: [Tables]
+      parameters:
+        - name: table_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully retrieved table
+        '403':
+          description: Unauthorized
+        '404':
+          description: Table not found
+        '500':
+          description: Database error
+
+    put:
+      summary: Update a table
+      tags: [Tables]
+      parameters:
+        - name: table_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                capacity:
+                  type: integer
+                location:
+                  type: string
+      responses:
+        '200':
+          description: Table updated successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Table not found
+        '422':
+          description: Missing required fields
+        '500':
+          description: Database error
+
+    delete:
+      summary: Delete a table
+      tags: [Tables]
+      parameters:
+        - name: table_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Table deleted successfully
+        '403':
+          description: Unauthorized
+        '404':
+          description: Table not found
+        '409':
+          description: Cannot delete table due to active reservations
+        '500':
+          description: Database error
